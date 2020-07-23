@@ -16,7 +16,11 @@ for i in os.listdir(path):
     dom = parse(xml_path)
     root = dom.documentElement
     img_name = root.getElementsByTagName("path")[0].childNodes[0].data
-    img_size = root.getElementsByTagName("size")[0]
+    try:
+        img_size = root.getElementsByTagName("size")[0]
+    except IndexError as e:
+        continue
+
     img_w = img_size.getElementsByTagName("width")[0].childNodes[0].data
     img_h = img_size.getElementsByTagName("height")[0].childNodes[0].data
     img_name = img_name.split("\\")
