@@ -23,3 +23,5 @@ class Path(object):
     @staticmethod
     def model_dir():
         return './Models/c3d-pretrained.pth'
+
+#参考用
