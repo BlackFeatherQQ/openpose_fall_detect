@@ -23,7 +23,7 @@ def action_detect(net,img):
 
 if __name__ == '__main__':
 
-    net = NetV3()
+    net = NetV2()
     # 加载已训练的数据
     net.load_state_dict(torch.load("D:/py/openpose_lightweight/action_detect/checkPoint/action.pt"))
     net.to(DEVICE)  # 使用GPU进行训练
