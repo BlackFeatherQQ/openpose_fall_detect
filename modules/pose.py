@@ -46,6 +46,25 @@ class Pose:
             self.id = Pose.last_id + 1
             Pose.last_id += 1
 
+    def getKeyPoints(self):
+
+        assert self.keypoints.shape == (Pose.num_kpts, 2)
+        points = []
+        for part_id in range(len(BODY_PARTS_PAF_IDS) - 2):
+            kpt_b_id = BODY_PARTS_KPT_IDS[part_id][1]
+            global_kpt_b_id = self.keypoints[kpt_b_id, 0]
+            if global_kpt_b_id != -1:
+                # x_b, y_b = self.keypoints[kpt_b_id]
+                points.append(self.keypoints[kpt_b_id])
+
+        gcn_points = np.array(points)
+
+        # for point in gcn_points[:13]:
+        #     x_b, y_b = point
+        #     cv2.circle(img, (int(x_b), int(y_b)), 3, Pose.color, -1)
+
+        return gcn_points[:13]
+
     def draw(self, img,is_save = False):
         assert self.keypoints.shape == (Pose.num_kpts, 2)
 
