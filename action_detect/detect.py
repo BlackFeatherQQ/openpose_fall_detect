@@ -6,10 +6,10 @@ import cv2
 DEVICE = "cpu"
 
 
-def action_detect(net,img):
-    # img = cv2.cvtColor(img,cv2.IMREAD_GRAYSCALE)
+def action_detect(net,pose):
+    # img = cv2.cvtColor(pose.img_pose,cv2.IMREAD_GRAYSCALE)
 
-    img = img.reshape(-1)
+    img = pose.img_pose.reshape(-1)
     img = img / 255  # 把数据转成[0,1]之间的数据
 
     img = np.float32(img)
@@ -18,7 +18,14 @@ def action_detect(net,img):
 
     predect = net(img)
 
-    return torch.argmax(predect,dim=1).cpu().detach().item()
+    action_id = int(torch.argmax(predect,dim=1).cpu().detach().item())
+
+    if int(action_id) == 0:
+        pose.pose_action = 'fall'
+    else:
+        pose.pose_action = 'normal'
+
+    return pose
 
 
 if __name__ == '__main__':

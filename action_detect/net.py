@@ -24,7 +24,7 @@ class NetV2(nn.Module):
             nn.Linear(16384,100),
             nn.ReLU(),
             nn.Linear(100,2),
-            nn.Softmax()
+            nn.Softmax(dim=1)
         )
 
 
@@ -34,7 +34,7 @@ class NetV2(nn.Module):
 
 
 if __name__ == '__main__':
-    net = NetV3()
+    net = NetV2()
     x = torch.randn(16,16384)
     y = net(x)
     print(y.shape)

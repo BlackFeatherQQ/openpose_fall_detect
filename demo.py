@@ -11,6 +11,7 @@ from modules.pose import Pose, track_poses
 from val import normalize, pad_width
 from action_detect.net import NetV2
 from action_detect.detect import action_detect
+from multiprocessing import Pool
 
 class ImageReader(object):
     def __init__(self, file_names):
@@ -49,6 +50,8 @@ class VideoReader(object):
         was_read, img = self.cap.read()
         if not was_read:
             raise StopIteration
+
+        # print(self.cap.get(7),self.cap.get(5))
         return img
 
 
@@ -81,6 +84,7 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
     return heatmaps, pafs, scale, pad
 
 
+
 def run_demo(net,action_net, image_provider, height_size, cpu, track, smooth):
     net = net.eval()
     if not cpu:
@@ -90,67 +94,85 @@ def run_demo(net,action_net, image_provider, height_size, cpu, track, smooth):
     upsample_ratio = 4
     num_keypoints = Pose.num_kpts
     previous_poses = []
-    delay = 33
+    # ********************************
+
+    prosess_pool = Pool(processes=4)
+    # *********************************
+    i = 0
     for img in image_provider:
         orig_img = img.copy()
+        # print(i)
 
-        heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
+        if i % 5 == 0:
+            heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
 
-        total_keypoints_num = 0
-        all_keypoints_by_type = []
-        for kpt_idx in range(num_keypoints):  # 19th for bg
-            total_keypoints_num += extract_keypoints(heatmaps[:, :, kpt_idx], all_keypoints_by_type, total_keypoints_num)
+            total_keypoints_num = 0
+            all_keypoints_by_type = []
+            for kpt_idx in range(num_keypoints):  # 19th for bg
+                total_keypoints_num += extract_keypoints(heatmaps[:, :, kpt_idx], all_keypoints_by_type, total_keypoints_num)
 
-        pose_entries, all_keypoints = group_keypoints(all_keypoints_by_type, pafs, demo=True)
-        for kpt_id in range(all_keypoints.shape[0]):
-            all_keypoints[kpt_id, 0] = (all_keypoints[kpt_id, 0] * stride / upsample_ratio - pad[1]) / scale
-            all_keypoints[kpt_id, 1] = (all_keypoints[kpt_id, 1] * stride / upsample_ratio - pad[0]) / scale
-        current_poses = []
-        for n in range(len(pose_entries)):
-            if len(pose_entries[n]) == 0:
-                continue
-            pose_keypoints = np.ones((num_keypoints, 2), dtype=np.int32) * -1
-            for kpt_id in range(num_keypoints):
-                if pose_entries[n][kpt_id] != -1.0:  # keypoint was found
-                    pose_keypoints[kpt_id, 0] = int(all_keypoints[int(pose_entries[n][kpt_id]), 0])
-                    pose_keypoints[kpt_id, 1] = int(all_keypoints[int(pose_entries[n][kpt_id]), 1])
-            pose = Pose(pose_keypoints, pose_entries[n][18])
-            if len(pose.getKeyPoints()) >= 8:
-                current_poses.append(pose)
-            # current_poses.append(pose)
+            pose_entries, all_keypoints = group_keypoints(all_keypoints_by_type, pafs, demo=True)
+            for kpt_id in range(all_keypoints.shape[0]):
+                all_keypoints[kpt_id, 0] = (all_keypoints[kpt_id, 0] * stride / upsample_ratio - pad[1]) / scale
+                all_keypoints[kpt_id, 1] = (all_keypoints[kpt_id, 1] * stride / upsample_ratio - pad[0]) / scale
+            current_poses = []
+            for n in range(len(pose_entries)):
+                if len(pose_entries[n]) == 0:
+                    continue
+                pose_keypoints = np.ones((num_keypoints, 2), dtype=np.int32) * -1
+                for kpt_id in range(num_keypoints):
+                    if pose_entries[n][kpt_id] != -1.0:  # keypoint was found
+                        pose_keypoints[kpt_id, 0] = int(all_keypoints[int(pose_entries[n][kpt_id]), 0])
+                        pose_keypoints[kpt_id, 1] = int(all_keypoints[int(pose_entries[n][kpt_id]), 1])
+                pose = Pose(pose_keypoints, pose_entries[n][18])
+                if len(pose.getKeyPoints()) >= 8:
+                    current_poses.append(pose)
+                # current_poses.append(pose)
 
-        if track:
-            track_poses(previous_poses, current_poses, smooth=smooth)
-            previous_poses = current_poses
-        for pose in current_poses:
-            img_pose = pose.draw(img)
+            # if track:
+            #     track_poses(previous_poses, current_poses, smooth=smooth)
+            #     previous_poses = current_poses
 
-            # ***************************************************
-            # img_pose = pose.draw(img,is_save=True) #保存骨骼图片
-            action_id = action_detect(action_net,img_pose)
+            action_pose = []
+            for pose in current_poses:
+                pose.img_pose = pose.draw(img)
+                # ***************************************************
+                # img_pose = pose.draw(img,is_save=True) #保存骨骼图片
 
-            if int(action_id) == 0:
-                pose.pose_action = 'fall'
-            else:
-                pose.pose_action = 'normal'
-            # *****************************************************
+                # action_id = prosess_pool.apply_async(action_detect,(action_net,pose)).get()
+                # action_pose.append(action_id)  # 从异步提交任务获取结果
+                pose = action_detect(action_net,pose)
 
-        img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
-        for pose in current_poses:
-            cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
-                          (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
-            if track:
-                cv2.putText(img, 'state: {}'.format(pose.pose_action), (pose.bbox[0], pose.bbox[1] - 16),
-                            cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
-        cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
-        key = cv2.waitKey(10)
-        # if key == 27:  # esc
-        #     return
-        # elif key == 112:  # 'p'
-        #     if delay == 33:
-        #         delay = 0
-        #     else:
-        #         delay = 33
+                cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+                              (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+                if track:
+                    cv2.putText(img, 'state: {}'.format(pose.pose_action), (pose.bbox[0], pose.bbox[1] - 16),
+                                cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
+
+                # if int(action_id) == 0:
+                #     pose.pose_action = 'fall'
+                # else:
+                #     pose.pose_action = 'normal'
+                # *****************************************************
+
+            img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
+            # for pose in action_pose:
+            #     cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+            #                   (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+            #     if track:
+            #         cv2.putText(img, 'state: {}'.format(pose.pose_action), (pose.bbox[0], pose.bbox[1] - 16),
+            #                     cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
+            cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
+
+            # action_pose.clear()
+            # current_poses.clear()
+            cv2.waitKey(1)
+        # else:
+        #     cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
+        #     cv2.waitKey(1)
+        i += 1
+    # prosess_pool.close()
+    # prosess_pool.join()
 
 def get_action(net,action_net, img, height_size, cpu, track, smooth):
     net = net.eval()
@@ -161,7 +183,6 @@ def get_action(net,action_net, img, height_size, cpu, track, smooth):
     upsample_ratio = 4
     num_keypoints = Pose.num_kpts
     previous_poses = []
-    delay = 33
 
     orig_img = img.copy()
 
@@ -215,14 +236,7 @@ def get_action(net,action_net, img, height_size, cpu, track, smooth):
 
         # return pose.pose_action
     cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
-    key = cv2.waitKey(10)
-    # if key == 27:  # esc
-    #     return
-    # elif key == 112:  # 'p'
-    #     if delay == 33:
-    #         delay = 0
-    #     else:
-    #         delay = 33
+    cv2.waitKey(1)
 
 
 
@@ -233,7 +247,7 @@ if __name__ == '__main__':
                        Please, consider c++ demo for the best performance.''')
     parser.add_argument('--checkpoint-path', type=str,default='weights/checkpoint_iter_370000.pth', help='path to the checkpoint')
     parser.add_argument('--height-size', type=int, default=256, help='network input layer height size')
-    parser.add_argument('--video', type=str, default='C:/Users/lieweiai/Desktop/13161786-1-208.mp4', help='path to video file or camera id')
+    parser.add_argument('--video', type=str, default=r'C:\Users\lieweiai\Desktop\5457708-1-208.mp4', help='path to video file or camera id')
     parser.add_argument('--images', nargs='+', default='', help='path to input image(s)')
     parser.add_argument('--cpu', action='store_true', help='run network inference on cpu')
     parser.add_argument('--track', type=int, default=1, help='track pose id in video')
@@ -257,6 +271,7 @@ if __name__ == '__main__':
     frame_provider = ImageReader(args.images)
     if args.video != '':
         frame_provider = VideoReader(args.video)
+        # print(frame_provider)
     else:
         args.track = 0
 

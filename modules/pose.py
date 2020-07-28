@@ -25,6 +25,7 @@ class Pose:
         self.confidence = confidence
         self.bbox = Pose.get_bbox(self.keypoints)
         self.pose_action = None
+        self.img_pose = None
         self.id = None
         self.filters = [[OneEuroFilter(), OneEuroFilter()] for _ in range(Pose.num_kpts)]
 
