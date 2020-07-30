@@ -88,8 +88,8 @@ def prepare_annotations(annotations_per_image, images_info, net_input_size):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--labels', type=str, required=True, help='path to json with keypoints train labels')
-    parser.add_argument('--output-name', type=str, default='prepared_train_annotation.pkl',
+    parser.add_argument('--labels', type=str, required=False, default='D:/code_data/coco/annotations/person_keypoints_train2017.json', help='path to json with keypoints train labels')
+    parser.add_argument('--output-name', type=str, default='D:/py/openpose_lightweight/data/prepared_train_annotation.pkl',
                         help='name of output file with prepared keypoints annotation')
     parser.add_argument('--net-input-size', type=int, default=368, help='network input size')
     args = parser.parse_args()

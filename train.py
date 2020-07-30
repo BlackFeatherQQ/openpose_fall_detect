@@ -23,7 +23,7 @@ cv2.ocl.setUseOpenCL(False)  # To prevent freeze of DataLoader
 def train(prepared_train_labels, train_images_folder, num_refinement_stages, base_lr, batch_size, batches_per_iter,
           num_workers, checkpoint_path, weights_only, from_mobilenet, checkpoints_folder, log_after,
           val_labels, val_images_folder, val_output_name, checkpoint_after, val_after):
-    net = PoseEstimationWithMobileNet(num_refinement_stages)
+    net = PoseEstimationWithMobileNet(num_refinement_stages).cuda()
 
     stride = 8
     sigma = 7
@@ -133,28 +133,29 @@ def train(prepared_train_labels, train_images_folder, num_refinement_stages, bas
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--prepared-train-labels', type=str, required=True,
+    parser.add_argument('--prepared-train-labels', type=str, required=False, default='D:/py/openpose_lightweight/data/prepared_train_annotation.pkl',
                         help='path to the file with prepared annotations')
-    parser.add_argument('--train-images-folder', type=str, required=True, help='path to COCO train images folder')
-    parser.add_argument('--num-refinement-stages', type=int, default=1, help='number of refinement stages')
+    parser.add_argument('--train-images-folder', type=str, required=False,default='D:/code_data/coco/train2017/', help='path to COCO train images folder')
+    parser.add_argument('--num-refinement-stages', type=int, default=3, help='number of refinement stages')
     parser.add_argument('--base-lr', type=float, default=4e-5, help='initial learning rate')
-    parser.add_argument('--batch-size', type=int, default=80, help='batch size')
+    parser.add_argument('--batch-size', type=int, default=6, help='batch size')
     parser.add_argument('--batches-per-iter', type=int, default=1, help='number of batches to accumulate gradient from')
-    parser.add_argument('--num-workers', type=int, default=8, help='number of workers')
-    parser.add_argument('--checkpoint-path', type=str, required=True, help='path to the checkpoint to continue training from')
+    parser.add_argument('--num-workers', type=int, default=4, help='number of workers')
+    # parser.add_argument('--checkpoint-path', type=str, required=False, default='D:/py/openpose_lightweight/weights/mobilenet_sgd_68.848.pth.tar', help='path to the checkpoint to continue training from')
+    parser.add_argument('--checkpoint-path', type=str, required=False, default='D:/py/openpose_lightweight/output/default_checkpoints/checkpoint_iter_190.pth', help='path to the checkpoint to continue training from')
     parser.add_argument('--from-mobilenet', action='store_true',
                         help='load weights from mobilenet feature extractor')
-    parser.add_argument('--weights-only', action='store_true',
+    parser.add_argument('--weights-only', action='store_false',
                         help='just initialize layers with pre-trained weights and start training from the beginning')
-    parser.add_argument('--experiment-name', type=str, default='default',
+    parser.add_argument('--experiment-name', type=str, default='D:/py/openpose_lightweight/output/default',
                         help='experiment name to create folder for checkpoints')
-    parser.add_argument('--log-after', type=int, default=100, help='number of iterations to print train loss')
+    parser.add_argument('--log-after', type=int, default=1, help='number of iterations to print train loss')
 
-    parser.add_argument('--val-labels', type=str, required=True, help='path to json with keypoints val labels')
-    parser.add_argument('--val-images-folder', type=str, required=True, help='path to COCO val images folder')
-    parser.add_argument('--val-output-name', type=str, default='detections.json',
+    parser.add_argument('--val-labels', type=str, required=False, default='D:/py/openpose_lightweight/data/val_subset.json', help='path to json with keypoints val labels')
+    parser.add_argument('--val-images-folder', type=str, required=False, default='D:/code_data/coco/val2017/', help='path to COCO val images folder')
+    parser.add_argument('--val-output-name', type=str, default='D:/py/openpose_lightweight/output/detections.json',
                         help='name of output json file with detected keypoints')
-    parser.add_argument('--checkpoint-after', type=int, default=5000,
+    parser.add_argument('--checkpoint-after', type=int, default=5,
                         help='number of iterations to save checkpoint')
     parser.add_argument('--val-after', type=int, default=5000,
                         help='number of iterations to run validation')

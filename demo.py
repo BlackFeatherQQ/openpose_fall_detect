@@ -125,7 +125,7 @@ def run_demo(net,action_net, image_provider, height_size, cpu, track, smooth):
                         pose_keypoints[kpt_id, 0] = int(all_keypoints[int(pose_entries[n][kpt_id]), 0])
                         pose_keypoints[kpt_id, 1] = int(all_keypoints[int(pose_entries[n][kpt_id]), 1])
                 pose = Pose(pose_keypoints, pose_entries[n][18])
-                if len(pose.getKeyPoints()) >= 8:
+                if len(pose.getKeyPoints()) >= 10:
                     current_poses.append(pose)
                 # current_poses.append(pose)
 
@@ -141,7 +141,8 @@ def run_demo(net,action_net, image_provider, height_size, cpu, track, smooth):
 
                 # action_id = prosess_pool.apply_async(action_detect,(action_net,pose)).get()
                 # action_pose.append(action_id)  # 从异步提交任务获取结果
-                pose = action_detect(action_net,pose)
+                crown_proportion = pose.bbox[2]/pose.bbox[3] #宽高比
+                pose = action_detect(action_net,pose,crown_proportion)
 
                 cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
                               (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
@@ -247,7 +248,7 @@ if __name__ == '__main__':
                        Please, consider c++ demo for the best performance.''')
     parser.add_argument('--checkpoint-path', type=str,default='weights/checkpoint_iter_370000.pth', help='path to the checkpoint')
     parser.add_argument('--height-size', type=int, default=256, help='network input layer height size')
-    parser.add_argument('--video', type=str, default=r'C:\Users\lieweiai\Desktop\5457708-1-208.mp4', help='path to video file or camera id')
+    parser.add_argument('--video', type=str, default=r'C:\Users\lieweiai\Desktop\96507864-1-160.mp4', help='path to video file or camera id')
     parser.add_argument('--images', nargs='+', default='', help='path to input image(s)')
     parser.add_argument('--cpu', action='store_true', help='run network inference on cpu')
     parser.add_argument('--track', type=int, default=1, help='track pose id in video')

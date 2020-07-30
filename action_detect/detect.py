@@ -6,7 +6,7 @@ import cv2
 DEVICE = "cpu"
 
 
-def action_detect(net,pose):
+def action_detect(net,pose, crown_proportion):
     # img = cv2.cvtColor(pose.img_pose,cv2.IMREAD_GRAYSCALE)
 
     img = pose.img_pose.reshape(-1)
@@ -20,10 +20,19 @@ def action_detect(net,pose):
 
     action_id = int(torch.argmax(predect,dim=1).cpu().detach().item())
 
-    if int(action_id) == 0:
+    possible_rate = 0.6*predect[:,action_id] + 0.4*(crown_proportion-1)
+
+    if possible_rate > 0.55:
         pose.pose_action = 'fall'
     else:
         pose.pose_action = 'normal'
+
+    # if int(action_id) == 0:
+    #     pose.pose_action = 'fall'
+    # else:
+    #     pose.pose_action = 'normal'
+
+    # print(possible_rate,pose.pose_action)
 
     return pose
 

@@ -5,8 +5,8 @@ import random
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--labels', type=str, required=True, help='path to json with keypoints val labels')
-    parser.add_argument('--output-name', type=str, default='val_subset.json',
+    parser.add_argument('--labels', type=str, required=False,default='D:/code_data/coco/annotations/person_keypoints_train2017.json', help='path to json with keypoints val labels')
+    parser.add_argument('--output-name', type=str, default='D:/py/openpose_lightweight/data/val_subset.json',
                         help='name of output file with subset of val labels')
     parser.add_argument('--num-images', type=int, default=250, help='number of images in subset')
     args = parser.parse_args()
