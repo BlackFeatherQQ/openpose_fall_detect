@@ -12,6 +12,7 @@ from val import normalize, pad_width
 from action_detect.net import NetV2
 from action_detect.detect import action_detect
 from multiprocessing import Pool
+import os
 
 class ImageReader(object):
     def __init__(self, file_names):
@@ -103,7 +104,7 @@ def run_demo(net,action_net, image_provider, height_size, cpu, track, smooth):
         orig_img = img.copy()
         # print(i)
 
-        if i % 5 == 0:
+        if i % 2 == 0:
             heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
 
             total_keypoints_num = 0
@@ -144,8 +145,13 @@ def run_demo(net,action_net, image_provider, height_size, cpu, track, smooth):
                 crown_proportion = pose.bbox[2]/pose.bbox[3] #宽高比
                 pose = action_detect(action_net,pose,crown_proportion)
 
-                cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
-                              (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+                if pose.pose_action == 'fall':
+                    cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+                                  (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 0, 255))
+                else:
+                    cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+                                  (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+
                 if track:
                     cv2.putText(img, 'state: {}'.format(pose.pose_action), (pose.bbox[0], pose.bbox[1] - 16),
                                 cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
@@ -248,8 +254,8 @@ if __name__ == '__main__':
                        Please, consider c++ demo for the best performance.''')
     parser.add_argument('--checkpoint-path', type=str,default='weights/checkpoint_iter_370000.pth', help='path to the checkpoint')
     parser.add_argument('--height-size', type=int, default=256, help='network input layer height size')
-    parser.add_argument('--video', type=str, default=r'C:\Users\lieweiai\Desktop\13161786-1-208.mp4', help='path to video file or camera id')
-    parser.add_argument('--images', nargs='+', default='', help='path to input image(s)')
+    parser.add_argument('--video', type=str, default='', help='path to video file or camera id')
+    parser.add_argument('--images', nargs='+', default=r'C:\Users\lieweiai\Desktop\val_openpose\images', help='path to input image(s)')
     parser.add_argument('--cpu', action='store_true', help='run network inference on cpu')
     parser.add_argument('--track', type=int, default=1, help='track pose id in video')
     parser.add_argument('--smooth', type=int, default=1, help='smooth pose keypoints')
@@ -274,6 +280,13 @@ if __name__ == '__main__':
         frame_provider = VideoReader(args.video)
         # print(frame_provider)
     else:
-        args.track = 0
+        images_dir = []
+        for img_dir in os.listdir(args.images):
+            images_dir.append(os.path.join(args.images, img_dir))
+
+        # *************************************************************************
+
+        frame_provider = ImageReader(images_dir)
+        # args.track = 0
 
     run_demo(net,action_net, frame_provider, args.height_size, args.cpu, args.track, args.smooth)

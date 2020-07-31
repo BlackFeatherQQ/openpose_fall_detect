@@ -81,17 +81,17 @@ class Pose:
         # **************************************************
 
         for part_id in range(len(BODY_PARTS_PAF_IDS) - 2):
-            # kpt_a_id = BODY_PARTS_KPT_IDS[part_id][0]
-            # global_kpt_a_id = self.keypoints[kpt_a_id, 0]
-            # if global_kpt_a_id != -1:
-            #     x_a, y_a = self.keypoints[kpt_a_id]
-            #     x_a, y_a = int(x_a),int(y_a)
-            #     cv2.circle(img, (x_a, y_a), 3, Pose.color, -1)
-            #
-            # # **************************************
-            #     px_a, py_a = x_a-self.bbox[0], y_a-self.bbox[1]
-            #     cv2.circle(I, (int(px_a*scale), int(py_a*scale)),3, [255, 255, 255] , -1)
-            # # **************************************
+            kpt_a_id = BODY_PARTS_KPT_IDS[part_id][0]
+            global_kpt_a_id = self.keypoints[kpt_a_id, 0]
+            if global_kpt_a_id != -1:
+                x_a, y_a = self.keypoints[kpt_a_id]
+                x_a, y_a = int(x_a),int(y_a)
+                cv2.circle(img, (x_a, y_a), 3, Pose.color, -1)
+
+            # **************************************
+                px_a, py_a = x_a-self.bbox[0], y_a-self.bbox[1]
+                cv2.circle(I, (int(px_a*scale), int(py_a*scale)),3, [255, 255, 255] , -1)
+            # **************************************
 
             kpt_b_id = BODY_PARTS_KPT_IDS[part_id][1]
             global_kpt_b_id = self.keypoints[kpt_b_id, 0]
@@ -102,12 +102,12 @@ class Pose:
                 # **************************************
                 px_b, py_b = x_b - self.bbox[0], y_b - self.bbox[1]
                 cv2.circle(I, (int(px_b * scale), int(py_b * scale)), 3,[255, 255, 255], -1)
-            # **************************************
-            # if global_kpt_a_id != -1 and global_kpt_b_id != -1:
-            #     cv2.line(img, (x_a, y_a), (x_b, y_b), Pose.color, 2)
-            #     # **************************************
-            #     cv2.line(I, (int(px_a*scale), int(py_a*scale)), (int(px_b*scale), int(py_b*scale)),[255, 255, 255], 2)
-            # **************************************
+            #**************************************
+            if global_kpt_a_id != -1 and global_kpt_b_id != -1:
+                cv2.line(img, (x_a, y_a), (x_b, y_b), Pose.color, 2)
+                # **************************************
+                cv2.line(I, (int(px_a*scale), int(py_a*scale)), (int(px_b*scale), int(py_b*scale)),[255, 255, 255], 2)
+            #**************************************
         # 保存骨骼图片
         if is_save:
             t = time.time()

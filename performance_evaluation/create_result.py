@@ -100,45 +100,44 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
     upsample_ratio = 4
     num_keypoints = Pose.num_kpts
 
-    i = 0
-    for img,img_name in image_provider:
+    with open("D:/py/openpose_lightweight/performance_evaluation/action_result.txt", "a") as f:
 
-        heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
+        for img,img_name in image_provider:
 
-        total_keypoints_num = 0
-        all_keypoints_by_type = []
-        for kpt_idx in range(num_keypoints):  # 19th for bg
-            total_keypoints_num += extract_keypoints(heatmaps[:, :, kpt_idx], all_keypoints_by_type,
-                                                     total_keypoints_num)
+            heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
 
-        pose_entries, all_keypoints = group_keypoints(all_keypoints_by_type, pafs, demo=True)
-        for kpt_id in range(all_keypoints.shape[0]):
-            all_keypoints[kpt_id, 0] = (all_keypoints[kpt_id, 0] * stride / upsample_ratio - pad[1]) / scale
-            all_keypoints[kpt_id, 1] = (all_keypoints[kpt_id, 1] * stride / upsample_ratio - pad[0]) / scale
-        current_poses = []
-        for n in range(len(pose_entries)):
-            if len(pose_entries[n]) == 0:
-                continue
-            pose_keypoints = np.ones((num_keypoints, 2), dtype=np.int32) * -1
-            for kpt_id in range(num_keypoints):
-                if pose_entries[n][kpt_id] != -1.0:  # keypoint was found
-                    pose_keypoints[kpt_id, 0] = int(all_keypoints[int(pose_entries[n][kpt_id]), 0])
-                    pose_keypoints[kpt_id, 1] = int(all_keypoints[int(pose_entries[n][kpt_id]), 1])
-            pose = Pose(pose_keypoints, pose_entries[n][18])
+            total_keypoints_num = 0
+            all_keypoints_by_type = []
+            for kpt_idx in range(num_keypoints):  # 19th for bg
+                total_keypoints_num += extract_keypoints(heatmaps[:, :, kpt_idx], all_keypoints_by_type,
+                                                         total_keypoints_num)
 
-            current_poses.append(pose)
+            pose_entries, all_keypoints = group_keypoints(all_keypoints_by_type, pafs, demo=True)
+            for kpt_id in range(all_keypoints.shape[0]):
+                all_keypoints[kpt_id, 0] = (all_keypoints[kpt_id, 0] * stride / upsample_ratio - pad[1]) / scale
+                all_keypoints[kpt_id, 1] = (all_keypoints[kpt_id, 1] * stride / upsample_ratio - pad[0]) / scale
+            current_poses = []
+            for n in range(len(pose_entries)):
+                if len(pose_entries[n]) == 0:
+                    continue
+                pose_keypoints = np.ones((num_keypoints, 2), dtype=np.int32) * -1
+                for kpt_id in range(num_keypoints):
+                    if pose_entries[n][kpt_id] != -1.0:  # keypoint was found
+                        pose_keypoints[kpt_id, 0] = int(all_keypoints[int(pose_entries[n][kpt_id]), 0])
+                        pose_keypoints[kpt_id, 1] = int(all_keypoints[int(pose_entries[n][kpt_id]), 1])
+                pose = Pose(pose_keypoints, pose_entries[n][18])
 
-        with open(f"C:/Users/lieweiai/Desktop/val_openpose/pred/{img_name}.txt", "w") as f:
+                current_poses.append(pose)
 
-            for pose in current_poses:
-                cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
-                              (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+                for pose in current_poses:
+                    cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+                                  (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
 
-                f.write(f"0 {pose.confidence} {pose.bbox[0]} {pose.bbox[1]} {pose.bbox[2]} {pose.bbox[3]}\n")
-                f.flush()
+                    f.write(f"0 {pose.confidence} {pose.bbox[0]} {pose.bbox[1]} {pose.bbox[2]} {pose.bbox[3]}\n")
+                    f.flush()
 
-        cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
-        cv2.waitKey(1)
+            cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
+            cv2.waitKey(1)
 
 
 if __name__ == '__main__':
