@@ -17,13 +17,13 @@ class Train:
         self.train_dataset = PoseDataSet(root,True)
         self.train_dataLoader = DataLoader(self.train_dataset,batch_size=100,shuffle=True)
 
-        # 加载训练数据
+        # 加载测试数据
         self.test_dataset = PoseDataSet(root,False)
         self.test_dataLoader = DataLoader(self.test_dataset,batch_size=100,shuffle=True)
 
         #创建模型
         # self.net = NetV1()
-        self.net = NetV3()
+        self.net = NetV2()
         #加载已训练的数据
         self.net.load_state_dict(torch.load("D:/py/openpose_lightweight/action_detect/checkPoint/action.pt"))
         self.net.to(DEVICE)  # 使用GPU进行训练
