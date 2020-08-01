@@ -25,6 +25,8 @@ class Pose:
         self.confidence = confidence
         self.bbox = Pose.get_bbox(self.keypoints)
         self.pose_action = None
+        self.action_fall = None
+        self.action_normal = None
         self.img_pose = None
         self.id = None
         self.filters = [[OneEuroFilter(), OneEuroFilter()] for _ in range(Pose.num_kpts)]
@@ -41,11 +43,11 @@ class Pose:
         bbox = cv2.boundingRect(found_keypoints)
         return bbox
 
-    def update_id(self, id=None):
-        self.id = id
-        if self.id is None:
-            self.id = Pose.last_id + 1
-            Pose.last_id += 1
+    # def update_id(self, id=None):
+    #     self.id = id
+    #     if self.id is None:
+    #         self.id = Pose.last_id + 1
+    #         Pose.last_id += 1
 
     def getKeyPoints(self):
 
@@ -162,14 +164,14 @@ def track_poses(previous_poses, current_poses, threshold=3, smooth=False):
             best_matched_pose_id = None
         current_pose.update_id(best_matched_pose_id)
 
-        if smooth:
-            for kpt_id in range(Pose.num_kpts):
-                if current_pose.keypoints[kpt_id, 0] == -1:
-                    continue
-                # reuse filter if previous pose has valid filter
-                if (best_matched_pose_id is not None
-                        and previous_poses[best_matched_id].keypoints[kpt_id, 0] != -1):
-                    current_pose.filters[kpt_id] = previous_poses[best_matched_id].filters[kpt_id]
-                current_pose.keypoints[kpt_id, 0] = current_pose.filters[kpt_id][0](current_pose.keypoints[kpt_id, 0])
-                current_pose.keypoints[kpt_id, 1] = current_pose.filters[kpt_id][1](current_pose.keypoints[kpt_id, 1])
-            current_pose.bbox = Pose.get_bbox(current_pose.keypoints)
+        # if smooth:
+        #     for kpt_id in range(Pose.num_kpts):
+        #         if current_pose.keypoints[kpt_id, 0] == -1:
+        #             continue
+        #         # reuse filter if previous pose has valid filter
+        #         if (best_matched_pose_id is not None
+        #                 and previous_poses[best_matched_id].keypoints[kpt_id, 0] != -1):
+        #             current_pose.filters[kpt_id] = previous_poses[best_matched_id].filters[kpt_id]
+        #         current_pose.keypoints[kpt_id, 0] = current_pose.filters[kpt_id][0](current_pose.keypoints[kpt_id, 0])
+        #         current_pose.keypoints[kpt_id, 1] = current_pose.filters[kpt_id][1](current_pose.keypoints[kpt_id, 1])
+        #     current_pose.bbox = Pose.get_bbox(current_pose.keypoints)

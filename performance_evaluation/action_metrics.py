@@ -43,8 +43,9 @@ def plot_action_AP(resultFile):
 
     fpr, tpr, thresholds = metrics.roc_curve(labels, pred_possible)
 
-    ROC = metrics.roc_auc_score(labels,pred_possible)  # 梯形块分割，建议使用
+    # ROC = metrics.roc_auc_score(labels,pred_possible)  # 梯形块分割，建议使用
     AP = metrics.average_precision_score(labels, pred_possible)  # 小矩形块分割
+    ROC  = metrics.auc(labels,pred_possible)
     F1_score = metrics.f1_score(labels_class,pred_class)
 
     # ======================= PLoting =============================
@@ -83,8 +84,8 @@ def create_action_result():
     net.load_state_dict(torch.load("D:/py/openpose_lightweight/action_detect/checkPoint/action.pt"))
     net.to(DEVICE)  # 使用GPU进行训练
 
-    labels = []
-    pred = []
+    # labels = []
+    # pred = []
 
     with open('D:/py/openpose_lightweight/performance_evaluation/action_result.txt', 'a') as f:
         for i, (imgs, tags) in enumerate(test_dataLoader):
@@ -96,8 +97,8 @@ def create_action_result():
             test_y = net(imgs)
             test_y = test_y.cpu().detach()[0].numpy()
             tags = torch.argmax(tags).numpy()
-            labels.append(tags)
-            pred.append(test_y[tags])
+            # labels.append(tags)
+            # pred.append(test_y[tags])
 
             f.write(f'{tags} {test_y[0]} {test_y[1]}\n')
             f.flush()

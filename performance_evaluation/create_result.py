@@ -35,7 +35,7 @@ class ImageReader(object):
         if img.size == 0:
             raise IOError('Image {} cannot be read'.format(self.file_names[self.idx]))
         self.idx = self.idx + 1
-        return img,img_name
+        return img,img_name,img_dir[-2]
 
 
 class VideoReader(object):
@@ -91,7 +91,7 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
 
 
 
-def run_demo(net, image_provider, height_size, cpu, track, smooth):
+def run_demo(net, action_net, image_provider, height_size, cpu, track, smooth):
     net = net.eval()
     if not cpu:
         net = net.cuda()
@@ -102,7 +102,12 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
 
     with open("D:/py/openpose_lightweight/performance_evaluation/action_result.txt", "a") as f:
 
-        for img,img_name in image_provider:
+        for img,img_name,label in image_provider:
+
+            if label == 'fall':
+                label_ = 0
+            else:
+                label_ = 1
 
             heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
 
@@ -127,14 +132,20 @@ def run_demo(net, image_provider, height_size, cpu, track, smooth):
                         pose_keypoints[kpt_id, 1] = int(all_keypoints[int(pose_entries[n][kpt_id]), 1])
                 pose = Pose(pose_keypoints, pose_entries[n][18])
 
-                current_poses.append(pose)
+                if len(pose.getKeyPoints()) >= 12:
+                    current_poses.append(pose)
 
                 for pose in current_poses:
+                    pose.img_pose = pose.draw(img)
+
+                    crown_proportion = pose.bbox[2] / pose.bbox[3]  # 宽高比
+                    pose = action_detect(action_net, pose, crown_proportion)
                     cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
                                   (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
 
-                    f.write(f"0 {pose.confidence} {pose.bbox[0]} {pose.bbox[1]} {pose.bbox[2]} {pose.bbox[3]}\n")
+                    f.write(f"{label_} {pose.action_fall} {pose.action_normal}\n")
                     f.flush()
+                    break
 
             cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
             cv2.waitKey(1)
@@ -148,7 +159,7 @@ if __name__ == '__main__':
     parser.add_argument('--checkpoint-path', type=str,default='D:/py/openpose_lightweight/weights/checkpoint_iter_370000.pth', help='path to the checkpoint')
     parser.add_argument('--height-size', type=int, default=256, help='network input layer height size')
     parser.add_argument('--video', type=str, default='', help='path to video file or camera id')
-    parser.add_argument('--images', nargs='+', default=r'C:\Users\lieweiai\Desktop\val_openpose\images', help='path to input image(s)')
+    parser.add_argument('--images', nargs='+', default=r'C:\Users\lieweiai\Desktop\val_openpose\fall', help='path to input image(s)')
     parser.add_argument('--cpu', action='store_true', help='run network inference on cpu')
     parser.add_argument('--track', type=int, default=1, help='track pose id in video')
     parser.add_argument('--smooth', type=int, default=1, help='smooth pose keypoints')
@@ -164,6 +175,13 @@ if __name__ == '__main__':
 
     # *************************************************************************
 
+    # *************************************************************************
+    action_net = NetV2() # 行为识别网络
+    # 加载已训练的数据
+    action_net.load_state_dict(torch.load("D:/py/openpose_lightweight/action_detect/checkPoint/action.pt"))
+    action_net.to('cpu')  # 使用GPU进行训练
+    # ************************************************************************
+
     frame_provider = ImageReader(images_dir)
     if args.video != '':
         frame_provider = VideoReader(args.video)
@@ -173,4 +191,4 @@ if __name__ == '__main__':
 
 
 
-    run_demo(net, frame_provider, args.height_size, args.cpu, args.track, args.smooth)
+    run_demo(net, action_net, frame_provider, args.height_size, args.cpu, args.track, args.smooth)
