@@ -250,20 +250,25 @@ def get_action(net,action_net, img, height_size, cpu, track, smooth):
     cv2.waitKey(1)
 
 
-
-if __name__ == '__main__':
+def detect_main(video_source = '',image_source = ''):
     parser = argparse.ArgumentParser(
         description='''Lightweight human pose estimation python demo.
-                       This is just for quick results preview.
-                       Please, consider c++ demo for the best performance.''')
-    parser.add_argument('--checkpoint-path', type=str,default='weights/checkpoint_iter_370000.pth', help='path to the checkpoint')
+                           This is just for quick results preview.
+                           Please, consider c++ demo for the best performance.''')
+    parser.add_argument('--checkpoint-path', type=str, default='weights/checkpoint_iter_370000.pth',
+                        help='path to the checkpoint')
     parser.add_argument('--height-size', type=int, default=256, help='network input layer height size')
     parser.add_argument('--video', type=str, default='', help='path to video file or camera id')
-    parser.add_argument('--images', nargs='+', default=r'C:\Users\lieweiai\Desktop\val_openpose\images\1596199652443.jpg', help='path to input image(s)')
+    parser.add_argument('--images', nargs='+',
+                        default='',
+                        help='path to input image(s)')
     parser.add_argument('--cpu', action='store_true', help='run network inference on cpu')
     # parser.add_argument('--track', type=int, default=0, help='track pose id in video')
     # parser.add_argument('--smooth', type=int, default=1, help='smooth pose keypoints')
     args = parser.parse_args()
+
+    args.video = video_source
+    args.images = image_source
 
     if args.video == '' and args.images == '':
         raise ValueError('Either --video or --image has to be provided')
@@ -273,7 +278,7 @@ if __name__ == '__main__':
     load_state(net, checkpoint)
 
     # *************************************************************************
-    action_net = NetV2() # 行为识别网络
+    action_net = NetV2()  # 行为识别网络
     # 加载已训练的数据
     action_net.load_state_dict(torch.load("D:/py/openpose_lightweight/action_detect/checkPoint/action.pt"))
     action_net.to('cpu')  # 使用GPU进行训练
@@ -297,4 +302,10 @@ if __name__ == '__main__':
 
         # args.track = 0
 
-    run_demo(net,action_net, frame_provider, args.height_size, args.cpu)
+    run_demo(net, action_net, frame_provider, args.height_size, args.cpu)
+
+
+
+
+if __name__ == '__main__':
+    detect_main(image_source=r'C:\Users\lieweiai\Desktop\val_openpose\images\1596199652443.jpg')
