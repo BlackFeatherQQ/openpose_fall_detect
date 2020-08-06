@@ -16,6 +16,8 @@ def action_detect(net,pose,crown_proportion):
 
     img = torch.from_numpy(img[None,:]).cpu()
 
+    print(img.shape,'img_shape')
+
     predect = net(img)
 
     action_id = int(torch.argmax(predect,dim=1).cpu().detach().item())

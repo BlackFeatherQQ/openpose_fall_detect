@@ -70,7 +70,8 @@ def train(prepared_train_labels, train_images_folder, num_refinement_stages, bas
                 scheduler.load_state_dict(checkpoint['scheduler'])
                 num_iter = checkpoint['iter']
                 current_epoch = checkpoint['current_epoch']
-
+    
+    print(net)
     net = DataParallel(net).cuda()
     net.train()
     for epochId in range(current_epoch, 280):
@@ -140,7 +141,7 @@ if __name__ == '__main__':
     parser.add_argument('--base-lr', type=float, default=4e-5, help='initial learning rate')
     parser.add_argument('--batch-size', type=int, default=6, help='batch size')
     parser.add_argument('--batches-per-iter', type=int, default=1, help='number of batches to accumulate gradient from')
-    parser.add_argument('--num-workers', type=int, default=4, help='number of workers')
+    parser.add_argument('--num-workers', type=int, default=1, help='number of workers')
     # parser.add_argument('--checkpoint-path', type=str, required=False, default='D:/py/openpose_lightweight/weights/mobilenet_sgd_68.848.pth.tar', help='path to the checkpoint to continue training from')
     parser.add_argument('--checkpoint-path', type=str, required=False, default='D:/py/openpose_lightweight/output/default_checkpoints/checkpoint_iter_190.pth', help='path to the checkpoint to continue training from')
     parser.add_argument('--from-mobilenet', action='store_true',

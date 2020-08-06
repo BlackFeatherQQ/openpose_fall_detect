@@ -70,6 +70,7 @@ def infer_fast(net, img, net_input_height_size, stride, upsample_ratio, cpu,
     if not cpu:
         tensor_img = tensor_img.cuda()
 
+    # print(tensor_img.shape,'img_shape')
     stages_output = net(tensor_img)
 
     # print(stages_output)
@@ -308,4 +309,4 @@ def detect_main(video_source = '',image_source = ''):
 
 
 if __name__ == '__main__':
-    detect_main(image_source=r'C:\Users\lieweiai\Desktop\val_openpose\images\1596199652443.jpg')
+    detect_main(video_source=r'C:\Users\lieweiai\Desktop\96507864-1-160.mp4')
