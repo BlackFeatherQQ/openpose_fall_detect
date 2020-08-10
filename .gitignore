@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Repo-specific GitIgnore ----------------------------------------------------------------------------------------------
 *.jpg
 *.jpeg
@@ -242,3 +243,8 @@ com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
 fabric.properties
+=======
+*.pyc
+__pycache__
+.idea/
+>>>>>>> 5e9a5d63b116f1bdf08697b56dc0833244fd5f05
