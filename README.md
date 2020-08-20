@@ -1,3 +1,3 @@
 Fall recognition using openpose
-BlackFeatherQQ/openpose_fall_detect
+Specific instructions are not completed,We will improve it as soon as possible.
 
