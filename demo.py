@@ -122,7 +122,7 @@ def run_demo(net,action_net, image_provider, height_size, cpu):
         orig_img = img.copy()
         # print(i)
 
-        if i % 20 == 0:
+        if i % 1 == 0:
             heatmaps, pafs, scale, pad = infer_fast(net, img, height_size, stride, upsample_ratio, cpu)
 
             total_keypoints_num = 0
@@ -150,7 +150,7 @@ def run_demo(net,action_net, image_provider, height_size, cpu):
 
 
             for pose in current_poses:
-                pose.img_pose = pose.draw(img,show_draw=False)
+                pose.img_pose = pose.draw(img,show_draw=True)
                 crown_proportion = pose.bbox[2]/pose.bbox[3] #宽高比
                 pose = action_detect(action_net,pose,crown_proportion)
 
@@ -159,11 +159,11 @@ def run_demo(net,action_net, image_provider, height_size, cpu):
                                   (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 0, 255),thickness=3)
                     cv2.putText(img, 'state: {}'.format(pose.pose_action), (pose.bbox[0], pose.bbox[1] - 16),
                                 cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 0, 255))
-                # else:
-                #     cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
-                #                   (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
-                #     cv2.putText(img, 'state: {}'.format(pose.pose_action), (pose.bbox[0], pose.bbox[1] - 16),
-                #                 cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0))
+                else:
+                    cv2.rectangle(img, (pose.bbox[0], pose.bbox[1]),
+                                  (pose.bbox[0] + pose.bbox[2], pose.bbox[1] + pose.bbox[3]), (0, 255, 0))
+                    cv2.putText(img, 'state: {}'.format(pose.pose_action), (pose.bbox[0], pose.bbox[1] - 16),
+                                cv2.FONT_HERSHEY_COMPLEX, 0.5, (0, 255, 0))
 
             img = cv2.addWeighted(orig_img, 0.6, img, 0.4, 0)
             cv2.imshow('Lightweight Human Pose Estimation Python Demo', img)
@@ -195,7 +195,6 @@ def detect_main(video_source = '',image_source = '',video_name=''):
     args.images = image_source
     if video_name != '':
         args.code_name = video_name
-    args.cpu = 'cpu'
 
     if args.video == '' and args.images == '':
         raise ValueError('Either --video or --image has to be provided')
@@ -231,5 +230,5 @@ def detect_main(video_source = '',image_source = '',video_name=''):
 
 if __name__ == '__main__':
 
-    detect_main(video_source='2.mp4',video_name='pan long age 39')
+    detect_main(video_source=r'C:\Users\lieweiai\Desktop\185eaf21bf45a652eb354dc5bb6792de.mp4',video_name='video1')
     # detect_main(video_source='C:/Users/lieweiai/Desktop/96507864-1-160.mp4')
